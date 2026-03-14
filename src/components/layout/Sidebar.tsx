@@ -7,18 +7,18 @@ import {
   Bot,
   Shield,
   HelpCircle,
-  Settings,
   ChevronLeft,
   ChevronRight,
   Building2,
   Package,
+  type LucideIcon,
 } from 'lucide-react'
 import { useTenant } from '@/contexts/TenantContext'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 
 interface NavItemProps {
-  icon: React.ComponentType<{ size?: number; className?: string }>
+  icon: LucideIcon
   label: string
   href: string
   collapsed: boolean
