@@ -164,7 +164,7 @@ export default function MyAI() {
             <select className="sigma-input">
               <option>1 hora</option>
               <option>3 horas</option>
-              <option selected>6 horas</option>
+              <option>6 horas</option>
               <option>12 horas</option>
               <option>24 horas</option>
             </select>
