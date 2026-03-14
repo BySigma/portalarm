@@ -2,104 +2,308 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+:root {
+  /* Sigma SDR Palette */
+  --bg-1: #FFFFFF;
+  --bg-2: #F5F5F4;
+  --int-3: #E8E8E6;
+  --int-4: #DEDEDD;
+  --int-5: #D4D4D2;
+  --brd-6: #C4C4C2;
+  --brd-7: #ABABAB;
+  --brd-8: #949492;
+  --sol-9: #7A7A78;
+  --sol-10: #5E5E5C;
+  --txt-11: #3A3A38;
+  --txt-12: #1A1A18;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+  /* Status semânticos */
+  --status-qualified-bg: #1A1A18;
+  --status-qualified-text: #FFFFFF;
+  --status-in-progress-bg: #E8E8E6;
+  --status-in-progress-text: #5E5E5C;
+  --status-forwarded-bg: #DCFCE7;
+  --status-forwarded-text: #166534;
+  --status-disqualified-bg: #FEE2E2;
+  --status-disqualified-text: #991B1B;
+  --status-reengagement-bg: #FEF9C3;
+  --status-reengagement-text: #854D0E;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+  /* Shadcn tokens mapped to Sigma palette */
+  --background: 0 0% 100%;
+  --foreground: 60 5% 10%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+  --card: 0 0% 100%;
+  --card-foreground: 60 5% 10%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 60 5% 10%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+  --primary: 60 5% 10%;
+  --primary-foreground: 0 0% 100%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+  --secondary: 60 3% 96%;
+  --secondary-foreground: 60 5% 10%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+  --muted: 60 3% 91%;
+  --muted-foreground: 60 3% 37%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+  --accent: 60 3% 91%;
+  --accent-foreground: 60 5% 10%;
 
-    --radius: 0.5rem;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
 
-    --sidebar-background: 0 0% 98%;
+  --border: 60 2% 87%;
+  --input: 60 2% 87%;
+  --ring: 60 5% 10%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+  --radius: 8px;
+  --radius-lg: 10px;
 
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 60 5% 10%;
+  --sidebar-primary: 60 5% 10%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 60 3% 91%;
+  --sidebar-accent-foreground: 60 5% 10%;
+  --sidebar-border: 60 2% 87%;
+  --sidebar-ring: 60 5% 10%;
 }
 
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
   }
 
   body {
-    @apply bg-background text-foreground;
+    font-family: 'Inter', 'Geist Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--bg-2);
+    color: var(--txt-12);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    color: var(--txt-12);
+  }
+}
+
+@layer components {
+  /* Sigma SDR specific component classes */
+  .sigma-card {
+    background-color: var(--bg-1);
+    border: 1px solid var(--int-4);
+    border-radius: var(--radius-lg);
+  }
+
+  .sigma-metric-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--txt-12);
+    line-height: 1.1;
+  }
+
+  .sigma-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--sol-9);
+  }
+
+  .sigma-body {
+    font-size: 13px;
+    color: var(--txt-12);
+  }
+
+  .sigma-muted {
+    font-size: 13px;
+    color: var(--sol-10);
+  }
+
+  .sigma-caption {
+    font-size: 11px;
+    color: var(--brd-8);
+  }
+
+  .sigma-btn-primary {
+    background-color: var(--txt-12);
+    color: #FFFFFF;
+    border: none;
+    border-radius: var(--radius);
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.1s;
+  }
+
+  .sigma-btn-primary:hover {
+    opacity: 0.85;
+  }
+
+  .sigma-btn-secondary {
+    background-color: var(--bg-1);
+    color: var(--txt-12);
+    border: 1px solid var(--int-5);
+    border-radius: var(--radius);
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.1s;
+  }
+
+  .sigma-btn-secondary:hover {
+    background-color: var(--int-3);
+  }
+
+  .sigma-input {
+    background-color: var(--bg-1);
+    border: 1px solid var(--int-4);
+    border-radius: var(--radius);
+    padding: 7px 10px;
+    font-size: 13px;
+    color: var(--txt-12);
+    outline: none;
+    width: 100%;
+    transition: border-color 0.1s;
+  }
+
+  .sigma-input:focus {
+    border-color: var(--txt-12);
+  }
+
+  .sigma-input::placeholder {
+    color: var(--brd-8);
+  }
+
+  /* Status badges */
+  .badge-qualified {
+    background-color: var(--status-qualified-bg);
+    color: var(--status-qualified-text);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  .badge-in-progress {
+    background-color: var(--status-in-progress-bg);
+    color: var(--status-in-progress-text);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  .badge-forwarded {
+    background-color: var(--status-forwarded-bg);
+    color: var(--status-forwarded-text);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  .badge-disqualified {
+    background-color: var(--status-disqualified-bg);
+    color: var(--status-disqualified-text);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  .badge-reengagement {
+    background-color: var(--status-reengagement-bg);
+    color: var(--status-reengagement-text);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  /* Skeleton loader */
+  .sigma-skeleton {
+    background: linear-gradient(90deg, var(--int-3) 25%, var(--int-4) 50%, var(--int-3) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 4px;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* Sidebar nav item */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--sol-10);
+    cursor: pointer;
+    transition: background-color 0.1s, color 0.1s;
+    text-decoration: none;
+  }
+
+  .nav-item:hover {
+    background-color: var(--int-3);
+    color: var(--txt-12);
+  }
+
+  .nav-item.active {
+    background-color: var(--txt-12);
+    color: #FFFFFF;
+  }
+
+  .nav-item.active svg {
+    color: #FFFFFF;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg-2);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--int-5);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--brd-7);
   }
 }
