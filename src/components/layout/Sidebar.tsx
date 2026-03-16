@@ -58,6 +58,12 @@ function NavSection({ label, collapsed }: { label: string; collapsed: boolean })
 export function Sidebar() {
   const { isSuperAdmin, tenantName } = useTenant()
   const [collapsed, setCollapsed] = useState(false)
+  const isAdminMode = localStorage.getItem('sigma_admin_mode') === 'true'
+
+  const toggleAdminMode = () => {
+    localStorage.setItem('sigma_admin_mode', isAdminMode ? 'false' : 'true')
+    window.location.reload()
+  }
 
   return (
     <aside
@@ -121,6 +127,34 @@ export function Sidebar() {
           <NavItem icon={Package} label="Pacotes" href="/admin/packages" collapsed={collapsed} />
         </div>
       )}
+
+      {/* Admin mode toggle */}
+      <button
+        onClick={toggleAdminMode}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          width: '100%',
+          padding: '6px 8px',
+          borderRadius: 7,
+          border: `1px solid ${isAdminMode ? 'var(--txt-12)' : 'var(--int-4)'}`,
+          backgroundColor: isAdminMode ? 'var(--txt-12)' : 'transparent',
+          cursor: 'pointer',
+          color: isAdminMode ? '#fff' : 'var(--sol-10)',
+          marginBottom: 4,
+          gap: 6,
+          transition: 'all 0.15s ease',
+        }}
+        title={isAdminMode ? 'Sair do Modo Admin' : 'Entrar no Modo Admin'}
+      >
+        <Shield size={14} className="shrink-0" />
+        {!collapsed && (
+          <span style={{ fontSize: 11 }}>
+            {isAdminMode ? 'Sair do Admin' : 'Modo Admin'}
+          </span>
+        )}
+      </button>
 
       {/* Collapse toggle */}
       <button
