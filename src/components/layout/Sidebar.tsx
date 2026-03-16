@@ -128,6 +128,34 @@ export function Sidebar() {
         </div>
       )}
 
+      {/* Admin mode toggle */}
+      <button
+        onClick={toggleAdminMode}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          width: '100%',
+          padding: '6px 8px',
+          borderRadius: 7,
+          border: `1px solid ${isAdminMode ? 'var(--txt-12)' : 'var(--int-4)'}`,
+          backgroundColor: isAdminMode ? 'var(--txt-12)' : 'transparent',
+          cursor: 'pointer',
+          color: isAdminMode ? '#fff' : 'var(--sol-10)',
+          marginBottom: 4,
+          gap: 6,
+          transition: 'all 0.15s ease',
+        }}
+        title={isAdminMode ? 'Sair do Modo Admin' : 'Entrar no Modo Admin'}
+      >
+        <Shield size={14} className="shrink-0" />
+        {!collapsed && (
+          <span style={{ fontSize: 11 }}>
+            {isAdminMode ? 'Sair do Admin' : 'Modo Admin'}
+          </span>
+        )}
+      </button>
+
       {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed(c => !c)}
