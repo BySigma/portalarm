@@ -58,6 +58,12 @@ function NavSection({ label, collapsed }: { label: string; collapsed: boolean })
 export function Sidebar() {
   const { isSuperAdmin, tenantName } = useTenant()
   const [collapsed, setCollapsed] = useState(false)
+  const isAdminMode = localStorage.getItem('sigma_admin_mode') === 'true'
+
+  const toggleAdminMode = () => {
+    localStorage.setItem('sigma_admin_mode', isAdminMode ? 'false' : 'true')
+    window.location.reload()
+  }
 
   return (
     <aside
