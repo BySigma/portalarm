@@ -18,6 +18,9 @@ const TenantContext = createContext<TenantContextType>({
   isLoading: true,
 })
 
+const MOCK_TENANT_ID = 'tenant-abc-123'
+const MOCK_TENANT_NAME = 'Solar Nordeste Ltda'
+
 export function TenantProvider({ children }: { children: ReactNode }) {
   const [ctx, setCtx] = useState<TenantContextType>({
     tenantId: null,
@@ -29,26 +32,43 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
-    if (!token) {
-      setCtx(c => ({ ...c, isLoading: false }))
+
+    if (token) {
+      getMe()
+        .then(profile => {
+          setCtx({
+            tenantId: profile.tenant_id,
+            tenantName: profile.name,
+            userRole: profile.role as UserRole,
+            isSuperAdmin: profile.role === 'super_admin',
+            isLoading: false,
+          })
+        })
+        .catch(() => {
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+          // Fall back to mock mode when token is invalid
+          const isAdmin = localStorage.getItem('sigma_admin_mode') === 'true'
+          setCtx({
+            tenantId: MOCK_TENANT_ID,
+            tenantName: MOCK_TENANT_NAME,
+            userRole: isAdmin ? 'super_admin' : 'tenant_admin',
+            isSuperAdmin: isAdmin,
+            isLoading: false,
+          })
+        })
       return
     }
 
-    getMe()
-      .then(profile => {
-        setCtx({
-          tenantId: profile.tenant_id,
-          tenantName: profile.name,
-          userRole: profile.role as UserRole,
-          isSuperAdmin: profile.role === 'super_admin',
-          isLoading: false,
-        })
-      })
-      .catch(() => {
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
-        setCtx(c => ({ ...c, isLoading: false }))
-      })
+    // No token — use mock mode so the app remains accessible before backend login is wired up
+    const isAdmin = localStorage.getItem('sigma_admin_mode') === 'true'
+    setCtx({
+      tenantId: MOCK_TENANT_ID,
+      tenantName: MOCK_TENANT_NAME,
+      userRole: isAdmin ? 'super_admin' : 'tenant_admin',
+      isSuperAdmin: isAdmin,
+      isLoading: false,
+    })
   }, [])
 
   return (
