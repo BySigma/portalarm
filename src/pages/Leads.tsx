@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { getLeads } from '@/lib/api'
 import { useTenant } from '@/contexts/TenantContext'
+import { mockLeads } from '@/lib/mockData'
 import type { Lead, LeadStatus, LeadChannel } from '@/lib/types'
 import { AvatarInitials } from '@/components/ui/AvatarInitials'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -40,7 +41,7 @@ function exportCSV(leads: Lead[]) {
 }
 
 export default function Leads() {
-  const { tenantId } = useTenant()
+  const { tenantId, isAuthenticated } = useTenant()
   const [view, setView] = useState<ViewMode>(
     (localStorage.getItem('sigma_leads_view') as ViewMode) || 'list'
   )
@@ -54,9 +55,9 @@ export default function Leads() {
   const { data } = useQuery({
     queryKey: ['leads', tenantId],
     queryFn: () => getLeads({ tenant_id: tenantId ?? undefined }),
-    enabled: !!tenantId,
+    enabled: isAuthenticated && !!tenantId,
   })
-  const allLeads = data?.leads ?? []
+  const allLeads = data?.leads ?? mockLeads
 
   const setViewMode = useCallback((v: ViewMode) => {
     setView(v)
@@ -204,7 +205,6 @@ export default function Leads() {
             </tbody>
           </table>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -279,7 +279,6 @@ export default function Leads() {
         </div>
       )}
 
-      {/* Lead detail modal */}
       {selectedLead && (
         <LeadDetailModal lead={selectedLead} onClose={() => setSelectedLead(null)} />
       )}

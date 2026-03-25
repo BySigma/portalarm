@@ -8,6 +8,7 @@ interface TenantContextType {
   userRole: UserRole | null
   isSuperAdmin: boolean
   isLoading: boolean
+  isAuthenticated: boolean
 }
 
 const TenantContext = createContext<TenantContextType>({
@@ -16,6 +17,7 @@ const TenantContext = createContext<TenantContextType>({
   userRole: null,
   isSuperAdmin: false,
   isLoading: true,
+  isAuthenticated: false,
 })
 
 const MOCK_TENANT_ID = 'tenant-abc-123'
@@ -28,6 +30,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     userRole: null,
     isSuperAdmin: false,
     isLoading: true,
+    isAuthenticated: false,
   })
 
   useEffect(() => {
@@ -42,33 +45,18 @@ export function TenantProvider({ children }: { children: ReactNode }) {
             userRole: profile.role as UserRole,
             isSuperAdmin: profile.role === 'super_admin',
             isLoading: false,
+            isAuthenticated: true,
           })
         })
         .catch(() => {
           localStorage.removeItem('access_token')
           localStorage.removeItem('refresh_token')
-          // Fall back to mock mode when token is invalid
-          const isAdmin = localStorage.getItem('sigma_admin_mode') === 'true'
-          setCtx({
-            tenantId: MOCK_TENANT_ID,
-            tenantName: MOCK_TENANT_NAME,
-            userRole: isAdmin ? 'super_admin' : 'tenant_admin',
-            isSuperAdmin: isAdmin,
-            isLoading: false,
-          })
+          setCtx(prev => ({ ...prev, ...mockCtx(), isLoading: false }))
         })
       return
     }
 
-    // No token — use mock mode so the app remains accessible before backend login is wired up
-    const isAdmin = localStorage.getItem('sigma_admin_mode') === 'true'
-    setCtx({
-      tenantId: MOCK_TENANT_ID,
-      tenantName: MOCK_TENANT_NAME,
-      userRole: isAdmin ? 'super_admin' : 'tenant_admin',
-      isSuperAdmin: isAdmin,
-      isLoading: false,
-    })
+    setCtx(prev => ({ ...prev, ...mockCtx(), isLoading: false }))
   }, [])
 
   return (
@@ -76,6 +64,17 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       {children}
     </TenantContext.Provider>
   )
+}
+
+function mockCtx() {
+  const isAdmin = localStorage.getItem('sigma_admin_mode') === 'true'
+  return {
+    tenantId: MOCK_TENANT_ID,
+    tenantName: MOCK_TENANT_NAME,
+    userRole: (isAdmin ? 'super_admin' : 'tenant_admin') as UserRole,
+    isSuperAdmin: isAdmin,
+    isAuthenticated: false,
+  }
 }
 
 export const useTenant = () => useContext(TenantContext)

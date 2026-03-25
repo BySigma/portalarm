@@ -1,6 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { getTenants, suspendTenant, updateTenant } from '@/lib/api'
+import { useTenant } from '@/contexts/TenantContext'
+import { MOCK_TENANTS } from '@/lib/mockData'
 import type { Tenant } from '@/lib/types'
 import { TenantStatusBadge } from '@/components/ui/StatusBadge'
 import { Plus, Eye, CreditCard, Ban, X } from 'lucide-react'
@@ -9,15 +11,19 @@ import { useState } from 'react'
 const STEPS = ['Dados da empresa', 'Configuração WABA', 'Atribuir pacote', 'Confirmar']
 
 export default function AdminClients() {
+  const { isAuthenticated } = useTenant()
   const queryClient = useQueryClient()
-  const { data: clients = [] } = useQuery({
+  const { data: apiClients } = useQuery({
     queryKey: ['tenants'],
     queryFn: getTenants,
+    enabled: isAuthenticated,
   })
+  const clients = apiClients ?? MOCK_TENANTS
   const [showModal, setShowModal] = useState(false)
   const [step, setStep] = useState(0)
 
   async function toggleSuspend(client: Tenant) {
+    if (!isAuthenticated) return
     if (client.status === 'suspended') {
       await updateTenant(client.id, { status: 'active' })
     } else {
@@ -122,7 +128,6 @@ export default function AdminClients() {
             backgroundColor: 'var(--bg-1)', border: '1px solid var(--int-4)',
             borderRadius: 12, width: 480, maxHeight: '85vh', overflow: 'auto',
           }} onClick={e => e.stopPropagation()}>
-            {/* Modal header */}
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--int-4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--txt-12)', margin: 0 }}>Novo cliente</p>
               <button onClick={() => setShowModal(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--sol-10)' }}>
@@ -130,7 +135,6 @@ export default function AdminClients() {
               </button>
             </div>
 
-            {/* Steps indicator */}
             <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--int-4)', display: 'flex', gap: 6 }}>
               {STEPS.map((s, i) => (
                 <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
@@ -150,7 +154,6 @@ export default function AdminClients() {
               ))}
             </div>
 
-            {/* Step content */}
             <div style={{ padding: 20 }}>
               {step === 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -189,7 +192,6 @@ export default function AdminClients() {
               )}
             </div>
 
-            {/* Footer */}
             <div style={{ padding: '12px 20px', borderTop: '1px solid var(--int-4)', display: 'flex', justifyContent: 'space-between' }}>
               <button className="sigma-btn-secondary" onClick={() => step > 0 ? setStep(s => s - 1) : setShowModal(false)}>
                 {step === 0 ? 'Cancelar' : '← Voltar'}

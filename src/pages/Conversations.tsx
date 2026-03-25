@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { getLeads, getConversation } from '@/lib/api'
 import { useTenant } from '@/contexts/TenantContext'
+import { mockLeads, mockConversations } from '@/lib/mockData'
 import { AvatarInitials } from '@/components/ui/AvatarInitials'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Search, Mic, Image, MessageSquare } from 'lucide-react'
@@ -24,7 +25,7 @@ function formatTime(ts: string) {
 }
 
 export default function Conversations() {
-  const { tenantId } = useTenant()
+  const { tenantId, isAuthenticated } = useTenant()
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<FilterType>('all')
@@ -32,19 +33,19 @@ export default function Conversations() {
   const { data: leadsData } = useQuery({
     queryKey: ['leads', tenantId],
     queryFn: () => getLeads({ tenant_id: tenantId ?? undefined }),
-    enabled: !!tenantId,
+    enabled: isAuthenticated && !!tenantId,
     select: d => d.leads,
   })
-  const leads = leadsData ?? []
+  const leads: Lead[] = leadsData ?? mockLeads
 
-  const { data: selectedConv } = useQuery({
+  const { data: apiConv } = useQuery({
     queryKey: ['conversation', selectedLeadId],
     queryFn: () => getConversation(selectedLeadId!),
-    enabled: !!selectedLeadId,
+    enabled: isAuthenticated && !!selectedLeadId,
   })
 
   const filteredLeads = useMemo(() => {
-    return leads.filter((lead: Lead) => {
+    return leads.filter(lead => {
       const matchSearch = lead.name.toLowerCase().includes(search.toLowerCase()) ||
         lead.phone.includes(search)
       const matchFilter = filter === 'all' || lead.status === filter
@@ -52,12 +53,12 @@ export default function Conversations() {
     })
   }, [leads, search, filter])
 
-  const selectedLead = leads.find((l: Lead) => l.id === selectedLeadId)
+  const effectiveSelectedId = selectedLeadId ?? filteredLeads[0]?.id ?? null
+  const selectedLead = leads.find(l => l.id === effectiveSelectedId)
 
-  // auto-select first lead
-  if (!selectedLeadId && filteredLeads.length > 0) {
-    setSelectedLeadId(filteredLeads[0].id)
-  }
+  const selectedConv = isAuthenticated
+    ? apiConv
+    : mockConversations.find(c => c.leadId === effectiveSelectedId)
 
   const filters: { key: FilterType; label: string }[] = [
     { key: 'all', label: 'Todos' },
@@ -74,12 +75,11 @@ export default function Conversations() {
         backgroundColor: 'var(--bg-1)', overflow: 'hidden',
         height: 'calc(100vh - 100px)',
       }}>
-        {/* Left panel — conversation list */}
+        {/* Left panel */}
         <div style={{
           width: 320, minWidth: 320, borderRight: '1px solid var(--int-4)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
         }}>
-          {/* Search */}
           <div style={{ padding: '12px 12px 8px', borderBottom: '1px solid var(--int-4)' }}>
             <div style={{ position: 'relative' }}>
               <Search size={13} style={{
@@ -96,7 +96,6 @@ export default function Conversations() {
             </div>
           </div>
 
-          {/* Filters */}
           <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--int-4)', display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {filters.map(f => (
               <button
@@ -115,19 +114,14 @@ export default function Conversations() {
             ))}
           </div>
 
-          {/* List */}
           <div style={{ flex: 1, overflowY: 'auto' }}>
             {filteredLeads.length === 0 ? (
               <div style={{ padding: 24, textAlign: 'center' }}>
                 <MessageSquare size={24} style={{ color: 'var(--brd-8)', margin: '0 auto 8px' }} />
                 <p className="sigma-muted" style={{ fontSize: 12 }}>Nenhuma conversa encontrada</p>
               </div>
-            ) : filteredLeads.map((lead: Lead) => {
-              const lastMsg = selectedLeadId === lead.id
-                ? selectedConv?.messages[selectedConv.messages.length - 1]
-                : undefined
-              const isSelected = selectedLeadId === lead.id
-
+            ) : filteredLeads.map(lead => {
+              const isSelected = effectiveSelectedId === lead.id
               return (
                 <button
                   key={lead.id}
@@ -146,7 +140,7 @@ export default function Conversations() {
                       <span className="sigma-caption">{timeAgo(lead.lastContact)}</span>
                     </div>
                     <p style={{ fontSize: 11, color: 'var(--sol-10)', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {lastMsg ? `${lastMsg.content.slice(0, 50)}...` : 'Clique para ver a conversa'}
+                      Clique para ver a conversa
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       <StatusBadge status={lead.status} />
@@ -166,11 +160,10 @@ export default function Conversations() {
           </div>
         </div>
 
-        {/* Right panel — conversation detail */}
+        {/* Right panel */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {selectedLead ? (
             <>
-              {/* Header */}
               <div style={{
                 padding: '12px 16px', borderBottom: '1px solid var(--int-4)',
                 display: 'flex', alignItems: 'center', gap: 12
@@ -187,7 +180,6 @@ export default function Conversations() {
                 <StatusBadge status={selectedLead.status} />
               </div>
 
-              {/* Messages */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {selectedConv?.messages.length ? selectedConv.messages.map(msg => (
                   <div key={msg.id} style={{
@@ -217,9 +209,7 @@ export default function Conversations() {
                       maxWidth: '68%',
                       backgroundColor: msg.role === 'agent' ? 'var(--txt-12)' : 'var(--int-3)',
                       color: msg.role === 'agent' ? '#fff' : 'var(--txt-12)',
-                      borderRadius: msg.role === 'agent'
-                        ? '8px 8px 0 8px'
-                        : '8px 8px 8px 0',
+                      borderRadius: msg.role === 'agent' ? '8px 8px 0 8px' : '8px 8px 8px 0',
                       padding: '8px 12px',
                       fontSize: 13,
                       lineHeight: 1.5,

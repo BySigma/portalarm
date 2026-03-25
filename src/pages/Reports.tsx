@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { getReportData, getDisqualifiedLeads, getLeads } from '@/lib/api'
 import { useTenant } from '@/contexts/TenantContext'
+import { mockReportData, mockLeads } from '@/lib/mockData'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
@@ -11,26 +12,30 @@ import { useState } from 'react'
 type Period = '7d' | '30d' | '90d'
 
 export default function Reports() {
-  const { tenantId } = useTenant()
+  const { tenantId, isAuthenticated } = useTenant()
   const [period, setPeriod] = useState<Period>('30d')
 
-  const { data: chartData = [] } = useQuery({
+  const { data: apiChartData } = useQuery({
     queryKey: ['reports', tenantId, period],
     queryFn: () => getReportData(period, tenantId ?? undefined),
-    enabled: !!tenantId,
+    enabled: isAuthenticated && !!tenantId,
   })
-  const { data: disqualifiedLeads = [] } = useQuery({
+  const { data: apiDisqualified } = useQuery({
     queryKey: ['disqualified', tenantId],
     queryFn: () => getDisqualifiedLeads(tenantId ?? undefined),
-    enabled: !!tenantId,
+    enabled: isAuthenticated && !!tenantId,
   })
   const { data: leadsData } = useQuery({
     queryKey: ['leads', tenantId],
     queryFn: () => getLeads({ tenant_id: tenantId ?? undefined }),
-    enabled: !!tenantId,
+    enabled: isAuthenticated && !!tenantId,
     select: d => d.leads,
   })
-  const reengagementLeads = (leadsData ?? []).filter(l => l.status === 'reengagement')
+
+  const periodDays = period === '7d' ? 7 : period === '30d' ? 30 : 90
+  const chartData = apiChartData ?? mockReportData.slice(-periodDays)
+  const disqualifiedLeads = apiDisqualified ?? mockLeads.filter(l => l.status === 'disqualified')
+  const reengagementLeads = (leadsData ?? mockLeads).filter(l => l.status === 'reengagement')
 
   const totalReceived = chartData.reduce((a, d) => a + d.received, 0)
   const totalQualified = chartData.reduce((a, d) => a + d.qualified, 0)
@@ -44,7 +49,6 @@ export default function Reports() {
 
   return (
     <AppLayout showFilters>
-      {/* Period selector */}
       <div style={{ display: 'flex', gap: 6 }}>
         {periods.map(p => (
           <button
@@ -62,7 +66,6 @@ export default function Reports() {
         ))}
       </div>
 
-      {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
         {[
           { label: 'Taxa de qualificação média', value: `${avgQualRate}%` },
@@ -76,7 +79,6 @@ export default function Reports() {
         ))}
       </div>
 
-      {/* Line chart */}
       <div className="sigma-card" style={{ padding: 20 }}>
         <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--txt-12)', margin: '0 0 16px' }}>
           Performance do agente — Leads recebidos vs. qualificados
@@ -92,11 +94,7 @@ export default function Reports() {
               tickLine={false}
               interval={Math.floor(chartData.length / 6)}
             />
-            <YAxis
-              tick={{ fontSize: 10, fill: 'var(--brd-8)' }}
-              axisLine={false}
-              tickLine={false}
-            />
+            <YAxis tick={{ fontSize: 10, fill: 'var(--brd-8)' }} axisLine={false} tickLine={false} />
             <Tooltip
               contentStyle={{
                 backgroundColor: 'var(--bg-1)', border: '1px solid var(--int-4)',
@@ -104,30 +102,19 @@ export default function Reports() {
               }}
               labelFormatter={d => new Date(d).toLocaleDateString('pt-BR')}
             />
-            <Legend
-              wrapperStyle={{ fontSize: 12, paddingTop: 12 }}
-            />
-            <Line
-              type="monotone" dataKey="received" name="Recebidos"
-              stroke="var(--txt-12)" strokeWidth={1.5} dot={false}
-            />
-            <Line
-              type="monotone" dataKey="qualified" name="Qualificados"
-              stroke="var(--sol-9)" strokeWidth={1.5} strokeDasharray="4 4" dot={false}
-            />
+            <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12 }} />
+            <Line type="monotone" dataKey="received" name="Recebidos" stroke="var(--txt-12)" strokeWidth={1.5} dot={false} />
+            <Line type="monotone" dataKey="qualified" name="Qualificados" stroke="var(--sol-9)" strokeWidth={1.5} strokeDasharray="4 4" dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Disqualified leads table */}
       <div className="sigma-card" style={{ overflow: 'hidden' }}>
         <div style={{
           padding: '12px 16px', borderBottom: '1px solid var(--int-4)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between'
         }}>
-          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--txt-12)', margin: 0 }}>
-            Leads desqualificados
-          </p>
+          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--txt-12)', margin: 0 }}>Leads desqualificados</p>
           <button className="sigma-btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
             <Download size={11} /> Exportar lista
           </button>

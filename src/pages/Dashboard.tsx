@@ -8,29 +8,30 @@ import { RecentLeadsList } from '@/components/dashboard/RecentLeadsList'
 import { AgentConfigCards } from '@/components/dashboard/AgentConfigCards'
 import { getDashboardStats, getLeads } from '@/lib/api'
 import { useTenant } from '@/contexts/TenantContext'
+import { mockDashboardStats, mockLeads } from '@/lib/mockData'
 import { AlertTriangle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export default function Dashboard() {
-  const { tenantId } = useTenant()
-  const { data: stats } = useQuery({
+  const { tenantId, isAuthenticated } = useTenant()
+
+  const { data: apiStats } = useQuery({
     queryKey: ['dashboard', tenantId],
     queryFn: () => getDashboardStats(tenantId ?? undefined),
-    enabled: !!tenantId,
+    enabled: isAuthenticated && !!tenantId,
   })
   const { data: leadsData } = useQuery({
     queryKey: ['leads', tenantId],
     queryFn: () => getLeads({ tenant_id: tenantId ?? undefined }),
-    enabled: !!tenantId,
+    enabled: isAuthenticated && !!tenantId,
   })
 
-  if (!stats) return null
+  const stats = apiStats ?? mockDashboardStats
+  const recentLeads = leadsData?.leads?.slice(0, 5) ?? mockLeads.slice(0, 5)
 
   const balancePct = stats.balance.total > 0 ? stats.balance.remaining / stats.balance.total : 1
   const showLowBalanceAlert = balancePct < 0.2
-
   const qualifiedRate = stats.totalLeads > 0 ? Math.round((stats.qualified / stats.totalLeads) * 100) : 0
-  const recentLeads = leadsData?.leads?.slice(0, 5) ?? []
 
   return (
     <AppLayout showFilters>

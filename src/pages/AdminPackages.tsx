@@ -3,6 +3,8 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { useState } from 'react'
 import { Plus, Edit2, Archive } from 'lucide-react'
 import { getTenants, getPackages } from '@/lib/api'
+import { useTenant } from '@/contexts/TenantContext'
+import { MOCK_TENANTS } from '@/lib/mockData'
 
 const STATIC_PLANS = [
   { id: '1', name: 'Pro 300', quantity: 300, price: 'R$ 397/mês' },
@@ -11,11 +13,14 @@ const STATIC_PLANS = [
 ]
 
 export default function AdminPackages() {
+  const { isAuthenticated } = useTenant()
   const plans = STATIC_PLANS
-  const { data: tenants = [] } = useQuery({
+  const { data: apiTenants } = useQuery({
     queryKey: ['tenants'],
     queryFn: getTenants,
+    enabled: isAuthenticated,
   })
+  const tenants = apiTenants ?? MOCK_TENANTS
 
   return (
     <AppLayout showFilters={false}>
