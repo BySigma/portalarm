@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { mockLeads } from '@/lib/mockData'
+import { getLeads } from '@/lib/api'
+import { useTenant } from '@/contexts/TenantContext'
 import type { Lead, LeadStatus, LeadChannel } from '@/lib/types'
 import { AvatarInitials } from '@/components/ui/AvatarInitials'
 import { StatusBadge } from '@/components/ui/StatusBadge'
@@ -38,6 +40,7 @@ function exportCSV(leads: Lead[]) {
 }
 
 export default function Leads() {
+  const { tenantId } = useTenant()
   const [view, setView] = useState<ViewMode>(
     (localStorage.getItem('sigma_leads_view') as ViewMode) || 'list'
   )
@@ -48,19 +51,26 @@ export default function Leads() {
   const [page, setPage] = useState(1)
   const perPage = 8
 
+  const { data } = useQuery({
+    queryKey: ['leads', tenantId],
+    queryFn: () => getLeads({ tenant_id: tenantId ?? undefined }),
+    enabled: !!tenantId,
+  })
+  const allLeads = data?.leads ?? []
+
   const setViewMode = useCallback((v: ViewMode) => {
     setView(v)
     localStorage.setItem('sigma_leads_view', v)
   }, [])
 
   const filtered = useMemo(() => {
-    return mockLeads.filter(l => {
+    return allLeads.filter(l => {
       const matchSearch = l.name.toLowerCase().includes(search.toLowerCase()) || l.phone.includes(search)
       const matchChannel = channelFilter === 'all' || l.channel === channelFilter
       const matchStatus = statusFilter === 'all' || l.status === statusFilter
       return matchSearch && matchChannel && matchStatus
     })
-  }, [search, channelFilter, statusFilter])
+  }, [allLeads, search, channelFilter, statusFilter])
 
   const paginated = filtered.slice((page - 1) * perPage, page * perPage)
   const totalPages = Math.ceil(filtered.length / perPage)

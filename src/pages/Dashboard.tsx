@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { BalanceCard } from '@/components/dashboard/BalanceCard'
@@ -5,16 +6,31 @@ import { LeadsBarChart } from '@/components/dashboard/LeadsBarChart'
 import { StatusDonutChart } from '@/components/dashboard/StatusDonutChart'
 import { RecentLeadsList } from '@/components/dashboard/RecentLeadsList'
 import { AgentConfigCards } from '@/components/dashboard/AgentConfigCards'
-import { mockDashboardStats, mockLeads } from '@/lib/mockData'
+import { getDashboardStats, getLeads } from '@/lib/api'
+import { useTenant } from '@/contexts/TenantContext'
 import { AlertTriangle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export default function Dashboard() {
-  const stats = mockDashboardStats
-  const balancePct = stats.balance.remaining / stats.balance.total
+  const { tenantId } = useTenant()
+  const { data: stats } = useQuery({
+    queryKey: ['dashboard', tenantId],
+    queryFn: () => getDashboardStats(tenantId ?? undefined),
+    enabled: !!tenantId,
+  })
+  const { data: leadsData } = useQuery({
+    queryKey: ['leads', tenantId],
+    queryFn: () => getLeads({ tenant_id: tenantId ?? undefined }),
+    enabled: !!tenantId,
+  })
+
+  if (!stats) return null
+
+  const balancePct = stats.balance.total > 0 ? stats.balance.remaining / stats.balance.total : 1
   const showLowBalanceAlert = balancePct < 0.2
 
-  const qualifiedRate = Math.round((stats.qualified / stats.totalLeads) * 100)
+  const qualifiedRate = stats.totalLeads > 0 ? Math.round((stats.qualified / stats.totalLeads) * 100) : 0
+  const recentLeads = leadsData?.leads?.slice(0, 5) ?? []
 
   return (
     <AppLayout showFilters>
@@ -59,7 +75,7 @@ export default function Dashboard() {
 
       {/* Row 3 — 2 cards */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <RecentLeadsList leads={mockLeads} />
+        <RecentLeadsList leads={recentLeads} />
         <AgentConfigCards />
       </div>
     </AppLayout>

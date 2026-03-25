@@ -1,26 +1,40 @@
+import { useQuery } from '@tanstack/react-query'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { mockReportData } from '@/lib/mockData'
+import { getReportData, getDisqualifiedLeads, getLeads } from '@/lib/api'
+import { useTenant } from '@/contexts/TenantContext'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
 import { Download } from 'lucide-react'
 import { useState } from 'react'
-import { mockLeads } from '@/lib/mockData'
 
 type Period = '7d' | '30d' | '90d'
 
 export default function Reports() {
+  const { tenantId } = useTenant()
   const [period, setPeriod] = useState<Period>('30d')
 
-  const periodDays = period === '7d' ? 7 : period === '30d' ? 30 : 90
-  const chartData = mockReportData.slice(-periodDays)
+  const { data: chartData = [] } = useQuery({
+    queryKey: ['reports', tenantId, period],
+    queryFn: () => getReportData(period, tenantId ?? undefined),
+    enabled: !!tenantId,
+  })
+  const { data: disqualifiedLeads = [] } = useQuery({
+    queryKey: ['disqualified', tenantId],
+    queryFn: () => getDisqualifiedLeads(tenantId ?? undefined),
+    enabled: !!tenantId,
+  })
+  const { data: leadsData } = useQuery({
+    queryKey: ['leads', tenantId],
+    queryFn: () => getLeads({ tenant_id: tenantId ?? undefined }),
+    enabled: !!tenantId,
+    select: d => d.leads,
+  })
+  const reengagementLeads = (leadsData ?? []).filter(l => l.status === 'reengagement')
 
   const totalReceived = chartData.reduce((a, d) => a + d.received, 0)
   const totalQualified = chartData.reduce((a, d) => a + d.qualified, 0)
   const avgQualRate = totalReceived > 0 ? Math.round((totalQualified / totalReceived) * 100) : 0
-
-  const disqualifiedLeads = mockLeads.filter(l => l.status === 'disqualified')
-  const reengagementLeads = mockLeads.filter(l => l.status === 'reengagement')
 
   const periods: { key: Period; label: string }[] = [
     { key: '7d', label: 'Últimos 7 dias' },

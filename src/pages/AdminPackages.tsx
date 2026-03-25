@@ -1,26 +1,21 @@
+import { useQuery } from '@tanstack/react-query'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { useState } from 'react'
 import { Plus, Edit2, Archive } from 'lucide-react'
-import { MOCK_TENANTS } from '@/lib/mockData'
+import { getTenants, getPackages } from '@/lib/api'
 
-const MOCK_PLANS = [
+const STATIC_PLANS = [
   { id: '1', name: 'Pro 300', quantity: 300, price: 'R$ 397/mês' },
   { id: '2', name: 'Pro 600', quantity: 600, price: 'R$ 697/mês' },
   { id: '3', name: 'Enterprise', quantity: 1500, price: 'R$ 1.497/mês' },
 ]
 
-const MOCK_ACTIVE_PACKAGES = MOCK_TENANTS.map(t => ({
-  clientId: t.id,
-  clientName: t.name,
-  plan: t.plan,
-  total: 300,
-  used: 300 - t.balance,
-  remaining: t.balance,
-  expiration: '31/03/2026',
-}))
-
 export default function AdminPackages() {
-  const [plans] = useState(MOCK_PLANS)
+  const plans = STATIC_PLANS
+  const { data: tenants = [] } = useQuery({
+    queryKey: ['tenants'],
+    queryFn: getTenants,
+  })
 
   return (
     <AppLayout showFilters={false}>
@@ -69,7 +64,7 @@ export default function AdminPackages() {
         </table>
       </div>
 
-      {/* Active packages table */}
+      {/* Active packages per tenant */}
       <div className="sigma-card" style={{ overflow: 'hidden' }}>
         <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--int-4)' }}>
           <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--txt-12)', margin: 0 }}>
@@ -79,7 +74,7 @@ export default function AdminPackages() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ backgroundColor: 'var(--bg-2)' }}>
-              {['Cliente', 'Plano', 'Total', 'Consumido', 'Restante', 'Expiração', 'Ações'].map(h => (
+              {['Cliente', 'Plano', 'Saldo', 'Status', 'Ações'].map(h => (
                 <th key={h} style={{
                   padding: '9px 14px', textAlign: 'left', fontSize: 11,
                   fontWeight: 600, color: 'var(--sol-9)', textTransform: 'uppercase',
@@ -89,28 +84,26 @@ export default function AdminPackages() {
             </tr>
           </thead>
           <tbody>
-            {MOCK_ACTIVE_PACKAGES.map((pkg, idx) => (
-              <tr key={pkg.clientId} style={{ backgroundColor: idx % 2 === 0 ? 'var(--bg-1)' : 'var(--bg-2)' }}>
+            {tenants.map((tenant, idx) => (
+              <tr key={tenant.id} style={{ backgroundColor: idx % 2 === 0 ? 'var(--bg-1)' : 'var(--bg-2)' }}>
                 <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 500, color: 'var(--txt-12)', borderBottom: '1px solid var(--int-3)' }}>
-                  {pkg.clientName}
+                  {tenant.name}
                 </td>
                 <td style={{ padding: '10px 14px', borderBottom: '1px solid var(--int-3)' }}>
                   <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 4, backgroundColor: 'var(--txt-12)', color: '#fff' }}>
-                    {pkg.plan}
+                    {tenant.plan}
                   </span>
                 </td>
-                <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--sol-10)', borderBottom: '1px solid var(--int-3)' }}>{pkg.total}</td>
-                <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--sol-10)', borderBottom: '1px solid var(--int-3)' }}>{pkg.used}</td>
                 <td style={{ padding: '10px 14px', borderBottom: '1px solid var(--int-3)' }}>
                   <span style={{
                     fontSize: 13, fontWeight: 600,
-                    color: pkg.remaining === 0 ? '#991B1B' : pkg.remaining < 50 ? '#854D0E' : '#166534',
+                    color: tenant.balance === 0 ? '#991B1B' : tenant.balance < 50 ? '#854D0E' : '#166534',
                   }}>
-                    {pkg.remaining}
+                    {tenant.balance}
                   </span>
                 </td>
                 <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--sol-10)', borderBottom: '1px solid var(--int-3)' }}>
-                  {pkg.expiration}
+                  {tenant.status}
                 </td>
                 <td style={{ padding: '10px 14px', borderBottom: '1px solid var(--int-3)' }}>
                   <button className="sigma-btn-secondary" style={{ padding: '4px 9px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>

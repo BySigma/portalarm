@@ -1,5 +1,6 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { MOCK_TENANTS } from '@/lib/mockData'
+import { getTenants, suspendTenant, updateTenant } from '@/lib/api'
 import type { Tenant } from '@/lib/types'
 import { TenantStatusBadge } from '@/components/ui/StatusBadge'
 import { Plus, Eye, CreditCard, Ban, X } from 'lucide-react'
@@ -8,9 +9,22 @@ import { useState } from 'react'
 const STEPS = ['Dados da empresa', 'Configuração WABA', 'Atribuir pacote', 'Confirmar']
 
 export default function AdminClients() {
-  const [clients, setClients] = useState<Tenant[]>(MOCK_TENANTS)
+  const queryClient = useQueryClient()
+  const { data: clients = [] } = useQuery({
+    queryKey: ['tenants'],
+    queryFn: getTenants,
+  })
   const [showModal, setShowModal] = useState(false)
   const [step, setStep] = useState(0)
+
+  async function toggleSuspend(client: Tenant) {
+    if (client.status === 'suspended') {
+      await updateTenant(client.id, { status: 'active' })
+    } else {
+      await suspendTenant(client.id)
+    }
+    queryClient.invalidateQueries({ queryKey: ['tenants'] })
+  }
 
   return (
     <AppLayout showFilters={false}>
@@ -80,7 +94,7 @@ export default function AdminClients() {
                       <CreditCard size={10} /> Créditos
                     </button>
                     <button
-                      onClick={() => setClients(c => c.map(cl => cl.id === client.id ? { ...cl, status: cl.status === 'suspended' ? 'active' : 'suspended' } : cl))}
+                      onClick={() => toggleSuspend(client)}
                       style={{
                         padding: '4px 7px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 3,
                         border: '1px solid var(--int-4)', borderRadius: 6, cursor: 'pointer',

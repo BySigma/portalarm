@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { mockConversations, mockLeads } from '@/lib/mockData'
+import { getLeads, getConversation } from '@/lib/api'
+import { useTenant } from '@/contexts/TenantContext'
 import { AvatarInitials } from '@/components/ui/AvatarInitials'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Search, Mic, Image, MessageSquare } from 'lucide-react'
@@ -22,21 +24,40 @@ function formatTime(ts: string) {
 }
 
 export default function Conversations() {
-  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(mockLeads[0]?.id ?? null)
+  const { tenantId } = useTenant()
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<FilterType>('all')
 
+  const { data: leadsData } = useQuery({
+    queryKey: ['leads', tenantId],
+    queryFn: () => getLeads({ tenant_id: tenantId ?? undefined }),
+    enabled: !!tenantId,
+    select: d => d.leads,
+  })
+  const leads = leadsData ?? []
+
+  const { data: selectedConv } = useQuery({
+    queryKey: ['conversation', selectedLeadId],
+    queryFn: () => getConversation(selectedLeadId!),
+    enabled: !!selectedLeadId,
+  })
+
   const filteredLeads = useMemo(() => {
-    return mockLeads.filter(lead => {
+    return leads.filter((lead: Lead) => {
       const matchSearch = lead.name.toLowerCase().includes(search.toLowerCase()) ||
         lead.phone.includes(search)
       const matchFilter = filter === 'all' || lead.status === filter
       return matchSearch && matchFilter
     })
-  }, [search, filter])
+  }, [leads, search, filter])
 
-  const selectedLead = mockLeads.find(l => l.id === selectedLeadId)
-  const selectedConv = mockConversations.find(c => c.leadId === selectedLeadId)
+  const selectedLead = leads.find((l: Lead) => l.id === selectedLeadId)
+
+  // auto-select first lead
+  if (!selectedLeadId && filteredLeads.length > 0) {
+    setSelectedLeadId(filteredLeads[0].id)
+  }
 
   const filters: { key: FilterType; label: string }[] = [
     { key: 'all', label: 'Todos' },
@@ -101,9 +122,10 @@ export default function Conversations() {
                 <MessageSquare size={24} style={{ color: 'var(--brd-8)', margin: '0 auto 8px' }} />
                 <p className="sigma-muted" style={{ fontSize: 12 }}>Nenhuma conversa encontrada</p>
               </div>
-            ) : filteredLeads.map(lead => {
-              const conv = mockConversations.find(c => c.leadId === lead.id)
-              const lastMsg = conv?.messages[conv.messages.length - 1]
+            ) : filteredLeads.map((lead: Lead) => {
+              const lastMsg = selectedLeadId === lead.id
+                ? selectedConv?.messages[selectedConv.messages.length - 1]
+                : undefined
               const isSelected = selectedLeadId === lead.id
 
               return (
@@ -124,7 +146,7 @@ export default function Conversations() {
                       <span className="sigma-caption">{timeAgo(lead.lastContact)}</span>
                     </div>
                     <p style={{ fontSize: 11, color: 'var(--sol-10)', margin: '0 0 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {lastMsg?.content.slice(0, 50) || 'Sem mensagens'}...
+                      {lastMsg ? `${lastMsg.content.slice(0, 50)}...` : 'Clique para ver a conversa'}
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       <StatusBadge status={lead.status} />

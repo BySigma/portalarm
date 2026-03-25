@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import type { UserRole } from '@/lib/types'
+import { getMe } from '@/lib/api'
 
 interface TenantContextType {
   tenantId: string | null
@@ -17,9 +18,6 @@ const TenantContext = createContext<TenantContextType>({
   isLoading: true,
 })
 
-// For mock mode — simulating an authenticated integrador
-const MOCK_MODE = true
-
 export function TenantProvider({ children }: { children: ReactNode }) {
   const [ctx, setCtx] = useState<TenantContextType>({
     tenantId: null,
@@ -30,21 +28,27 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   })
 
   useEffect(() => {
-    if (MOCK_MODE) {
-      // Check if admin mode is toggled via localStorage
-      const isAdmin = localStorage.getItem('sigma_admin_mode') === 'true'
-      setCtx({
-        tenantId: 'tenant-abc-123',
-        tenantName: 'Solar Nordeste Ltda',
-        userRole: isAdmin ? 'super_admin' : 'tenant_admin',
-        isSuperAdmin: isAdmin,
-        isLoading: false,
-      })
+    const token = localStorage.getItem('access_token')
+    if (!token) {
+      setCtx(c => ({ ...c, isLoading: false }))
       return
     }
 
-    // Real Supabase auth would go here
-    setCtx(c => ({ ...c, isLoading: false }))
+    getMe()
+      .then(profile => {
+        setCtx({
+          tenantId: profile.tenant_id,
+          tenantName: profile.name,
+          userRole: profile.role as UserRole,
+          isSuperAdmin: profile.role === 'super_admin',
+          isLoading: false,
+        })
+      })
+      .catch(() => {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+        setCtx(c => ({ ...c, isLoading: false }))
+      })
   }, [])
 
   return (
